@@ -22,6 +22,7 @@ import com.example.meteo.OWM.Observation;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 import java.util.ArrayList;
 
 
@@ -57,7 +58,7 @@ public class OWM implements ListProvider<OWM.Observation> {
             if (convertView == null) {
                 // Cet item n'est pas recyclé, inflater le layout.
                 Log.d("Adapter", "inflate");
-                view = LayoutInflater.from(getContext()).inflate(resource, parent,false);
+                view = LayoutInflater.from(getContext()).inflate(resource, parent, false);
             } else {
                 // Cet item est recyclé, l'utiliser tel quel.
                 Log.d("Adapter", "recycle");
@@ -83,7 +84,7 @@ public class OWM implements ListProvider<OWM.Observation> {
     }
 
     @Override
-    public ArrayList<Observation> toList(String strJSON)  throws JSONException {
+    public ArrayList<Observation> toList(String strJSON) throws JSONException {
         // Créer une ArrayList vide.
         ArrayList<Observation> observations = new ArrayList<>();
         // Récupérer la racine JSON.
@@ -91,7 +92,7 @@ public class OWM implements ListProvider<OWM.Observation> {
         // Récupérer le tableau des villes.
         JSONArray cities = root.getJSONArray("list");
         // Pour chaque ville, récupérer les données.
-        for (int i = 0; i < cities.length(); i++ ) {
+        for (int i = 0; i < cities.length(); i++) {
             // Créer une nouvelle observation.
             Observation obs = new Observation();
             // L'ajouter à la liste.
@@ -111,7 +112,7 @@ public class OWM implements ListProvider<OWM.Observation> {
             try {
                 obs.icon = BitmapFactory.decodeStream(new URL(obs.iconURL).openStream());
             } catch (IOException e) {
-                Log.e("OWM.toList",ERR_ICON_NOT_FOUND);
+                Log.e("OWM.toList", ERR_ICON_NOT_FOUND);
             }
         }
         return observations;
@@ -119,8 +120,7 @@ public class OWM implements ListProvider<OWM.Observation> {
 
     @Override
     public ArrayAdapter<Observation> getAdapter(Context context) {
-        return new ArrayAdapterObservation(context,R.layout.observations);
+        return new ArrayAdapterObservation(context, R.layout.observations);
     }
 
-}
 }
