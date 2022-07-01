@@ -1,4 +1,7 @@
 <resources>
     <string name="app_name">Meteo</string>
     <string name="icon_description">Icon</string>
+    <string name="action_refresh">action_refresh</string>
+    <string name="info_loading">Loading...</string>
+    <string name="info_no_internet">No internet connexion</string>
 </resources>

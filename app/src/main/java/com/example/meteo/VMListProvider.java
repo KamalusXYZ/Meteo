@@ -7,23 +7,27 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.lifecycle.AndroidViewModel;
-import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
-import java.security.Provider;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Scanner;
 
 public class VMListProvider<P extends ListProvider<E>, E> extends AndroidViewModel {
     private final Application application;
-    private static final String ERROR_WRONG_SERVER_RESPONSE = "";
-    private static final String ERROR_WRONG_JSON_RESPONSE = "";
-    private final MutableLiveData<P> LDprovider = new MutableLiveData<>();
-    private MutableLiveData<ArrayList<E>> LDlist;
+    private static final String ERROR_WRONG_SERVER_RESPONSE = "ERROR_WRONG_SERVER_RESPONSE";
+    private static final String ERROR_WRONG_JSON_RESPONSE = "ERROR_WRONG_JSON_RESPONSE";
+    static final String STATE_LOADING_STARTS = "STATE_LOADING_STARTS";
+    static final String STATE_LOADING_ENDS = "STATE_LOADING_ENDS";
+    static final String STATE_DONE = "STATE_DONE";
+    static final String STATE_NO_INTERNET = "STATE_NO_INTERNET";
+
+
+    private final MutableLiveData<P> mldProvider = new MutableLiveData<>();
+    private MutableLiveData<ArrayList<E>> mldList;
+    private final MutableLiveData<String> mldState = new MutableLiveData<>();
 
     public VMListProvider(@NonNull Application application) {
         super(application);
@@ -31,23 +35,40 @@ public class VMListProvider<P extends ListProvider<E>, E> extends AndroidViewMod
         this.application = application;
     }
 
-    public MutableLiveData<ArrayList<E>> getLDList() {
-        // Si pas encore ou plus d'ArrayList, instancier et requeter le serveur du provider.
-        if (LDlist == null) {
-            LDlist = new MutableLiveData<>();
-            new AsyncTaskProvider().execute(LDprovider.getValue());
-        }
-        // Retourner le LiveData.
-        return LDlist;
+    public MutableLiveData<String> getMldState() {
+        return mldState;
+    }
+
+    public void setStateDone() {
+        mldState.setValue(STATE_DONE);
     }
 
 
+    public MutableLiveData<ArrayList<E>> getMldList(boolean forceReload) {
+        // Si pas encore ou plus d'ArrayList, instancier et requeter le serveur du provider.
+        if (mldList == null) {
+            mldList = new MutableLiveData<>();
+            loadData();
+        } else if (forceReload) {
+            loadData();
+        }
+        // Retourner l'ArrayList.
+        return mldList;
+    }
+
     public P getProvider() {
-        return LDprovider.getValue();
+        return mldProvider.getValue();
     }
 
     public void setProvider(P provider) {
-        this.LDprovider.setValue(provider);
+        this.mldProvider.setValue(provider);
+    }
+
+    private void loadData() {
+        // Si connexion internet active, requêter le serveur du provider.
+        if (Util.isConnected(this.application))
+            new AsyncTaskProvider().execute(mldProvider.getValue());
+        else mldState.setValue(STATE_NO_INTERNET);
     }
 
     /**
@@ -61,11 +82,18 @@ public class VMListProvider<P extends ListProvider<E>, E> extends AndroidViewMod
     private class AsyncTaskProvider extends AsyncTask<P, Void, ArrayList<E>> {
 
         @Override
-        protected ArrayList<E> doInBackground(P... providers) {
+        protected void onPreExecute() {
+            // Signaler le début du chargement.
+            mldState.setValue(STATE_LOADING_STARTS);
+        }
+
+        @SafeVarargs
+        @Override
+        protected final ArrayList<E> doInBackground(P... providers) {
             // Requêter le ListProvider.
             P provider = providers[0];
             // Préparer un InputStream.
-            InputStream is = null;
+            InputStream is;
             //Requêter le serveur du ListProvider.
             try {
                 is = new URL(provider.getURL()).openStream();
@@ -90,11 +118,14 @@ public class VMListProvider<P extends ListProvider<E>, E> extends AndroidViewMod
             return list;
         }
 
+
         @Override
         protected void onPostExecute(ArrayList<E> list) {
             Log.d("onPostExecute", list.toString());
             // Définir l'ArrayList LiveData à partir de l'ArrayList reçu.
-            VMListProvider.this.LDlist.setValue(list);
+            VMListProvider.this.mldList.setValue(list);
+            // Signaler la fin du chargement.
+            mldState.setValue(STATE_LOADING_ENDS);
         }
     }
 }

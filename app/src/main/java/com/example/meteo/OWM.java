@@ -18,19 +18,20 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import com.example.meteo.OWM.Observation;
-
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
 
-
 public class OWM implements ListProvider<OWM.Observation> {
+
     public static final class Observation {
         String city;
         int min;
         int max;
+        int feelsLike;
+        int humidity;
+        int windSpeed;
+        int windDirection;
         String description;
         String iconURL;
         Bitmap icon;
@@ -65,9 +66,14 @@ public class OWM implements ListProvider<OWM.Observation> {
                 view = convertView;
             }
             // Utiliser l'Observation pour définir le texte du layout.
-            Observation obs = this.getItem(position);
             ((TextView) view.findViewById(R.id.item_text)).setText(getItem(position).toString());
             ((ImageView) view.findViewById(R.id.item_icon)).setImageBitmap(getItem(position).icon);
+
+            // Si champs description disponible, le définir.
+            TextView tvDescription = view.findViewById(R.id.item_description);
+            if (tvDescription != null)
+                tvDescription.setText(getItem(position).description);
+            // Retourner le layout inflaté et renseigné.
             return view;
         }
     }
@@ -107,8 +113,12 @@ public class OWM implements ListProvider<OWM.Observation> {
             JSONObject main = city.getJSONObject("main");
             obs.min = (int) Math.round(main.getDouble("temp_min"));
             obs.max = (int) Math.round(main.getDouble("temp_max"));
+            obs.feelsLike = (int) Math.round(main.getDouble("feels_like"));
+            obs.humidity = main.getInt("humidity");
+            JSONObject wind = city.getJSONObject("wind");
+            obs.windDirection = wind.getInt("deg");
+            obs.windSpeed = (int) Math.round(wind.getDouble("speed") * 3.6); // m/s -> km/h
             // Downloader les icônes.
-            InputStream is;
             try {
                 obs.icon = BitmapFactory.decodeStream(new URL(obs.iconURL).openStream());
             } catch (IOException e) {
