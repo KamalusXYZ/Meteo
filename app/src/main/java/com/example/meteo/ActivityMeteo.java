@@ -29,6 +29,17 @@ public class ActivityMeteo extends AppCompatActivity {
         // Observer l'état du ViewModel pour réagir aux changements.
         vm.getMldState().observe(this, state -> {
             switch (state) {
+                case VMListProvider.STATE_CLICK_ON_ITEM:
+                    // Remplacer le fragmentlist par le FragmentObservation en ajoutant la transaction à l'historique.
+                    // Remplacer le fragmentlist par le FragmentObservation en ajoutant la transaction à l'historique.
+                    this
+                            .getSupportFragmentManager()
+                            .beginTransaction()
+                            .replace(R.id.container, new FragmentObservation())
+                            .addToBackStack(null)
+                            .commit();
+                    break;
+
                 case VMListProvider.STATE_LOADING_STARTS:
                     // Afficher le Snackbar de chargement
                     loadingBar.show();
@@ -42,12 +53,15 @@ public class ActivityMeteo extends AppCompatActivity {
                     loadingBar.dismiss();
                     break;
 
+
                 case VMListProvider.STATE_DONE:
                     // Ne rien faire, présent pour éviter une boucle sans fin.
                     return;
             }
             vm.setStateDone();
         });
+        // Observer les changements de position pour réagir aux cliques sur les itemsde la liste.
+
 
         // La première fois, charger une instance de FragmentList dans le frameLayout.
         if (savedInstanceState == null) {

@@ -14,12 +14,13 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.example.meteo.OWM.Observation;
 import com.example.meteo.databinding.FragmentListBinding;
 import com.example.meteo.databinding.FragmentObservationBinding;
 
 
 public class FragmentObservation extends Fragment {
-    private VMListProvider<OWM, OWM.Observation> vm;
+    private VMListProvider<OWM, Observation> vm;
 
     public FragmentObservation() {
         // Required empty public constructor
@@ -42,8 +43,16 @@ public class FragmentObservation extends Fragment {
                              Bundle savedInstanceState) {
         // Récupérer la classe auto-générée de binding du layout.
         FragmentObservationBinding binding = FragmentObservationBinding.inflate(inflater, container, false);
+        // Récupérer l'observation sur laquelle l'utilisateur à cliqué.
+        Observation obs = this.vm.getItem();
+        // Définir les valeurs des les champs de layout.
+        assert obs != null;  //Avec notre logique, obs ne peut pas êetre null.
+        binding.obsCity.setText(obs.city);
+        binding.obsDescription.setText(obs.description);
+        binding.obsTemp.setText(getString(R.string.obs_temp, obs.min, obs.max, obs.feelsLike));
+        binding.obsWind.setText(getString(R.string.obs_wind, obs.windDirection, obs.windSpeed));
+        binding.obsHumidity.setText(getString(R.string.obs_humidity, obs.humidity));
 
-        //TODO
 
         //Retourne le fragment inflaté.
         return binding.getRoot();

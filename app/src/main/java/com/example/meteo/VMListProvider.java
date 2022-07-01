@@ -15,12 +15,13 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Scanner;
 
-public class VMListProvider<P extends ListProvider<E>, E> extends AndroidViewModel {
+public final class VMListProvider<P extends ListProvider<E>, E> extends AndroidViewModel {
     private final Application application;
     private static final String ERROR_WRONG_SERVER_RESPONSE = "ERROR_WRONG_SERVER_RESPONSE";
     private static final String ERROR_WRONG_JSON_RESPONSE = "ERROR_WRONG_JSON_RESPONSE";
     static final String STATE_LOADING_STARTS = "STATE_LOADING_STARTS";
     static final String STATE_LOADING_ENDS = "STATE_LOADING_ENDS";
+    static final String STATE_CLICK_ON_ITEM = "STATE_CLICK_ON_ITEM";
     static final String STATE_DONE = "STATE_DONE";
     static final String STATE_NO_INTERNET = "STATE_NO_INTERNET";
 
@@ -28,6 +29,8 @@ public class VMListProvider<P extends ListProvider<E>, E> extends AndroidViewMod
     private final MutableLiveData<P> mldProvider = new MutableLiveData<>();
     private MutableLiveData<ArrayList<E>> mldList;
     private final MutableLiveData<String> mldState = new MutableLiveData<>();
+    private final MutableLiveData<Integer> mldPosition = new MutableLiveData<>();
+
 
     public VMListProvider(@NonNull Application application) {
         super(application);
@@ -37,6 +40,10 @@ public class VMListProvider<P extends ListProvider<E>, E> extends AndroidViewMod
 
     public MutableLiveData<String> getMldState() {
         return mldState;
+    }
+
+    public MutableLiveData<Integer> getMldPosition() {
+        return mldPosition;
     }
 
     public void setStateDone() {
@@ -63,6 +70,20 @@ public class VMListProvider<P extends ListProvider<E>, E> extends AndroidViewMod
     public void setProvider(P provider) {
         this.mldProvider.setValue(provider);
     }
+
+    public void setPosition(int position) {
+        // Sauvegarder la position
+        mldPosition.setValue(position);
+        // Signaler le clique sur item.
+        mldState.setValue(STATE_CLICK_ON_ITEM);
+    }
+
+    public E getItem() {
+        ArrayList<E> list = mldList.getValue();
+        Integer position = mldPosition.getValue();
+        return list != null && position != null ? list.get(position) : null;
+    }
+
 
     private void loadData() {
         // Si connexion internet active, requêter le serveur du provider.
